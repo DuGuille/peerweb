@@ -24,6 +24,7 @@ function enterRoom(room) {
     if (snapshot.val()) {
       WebRTCHandler.join( JSON.parse(snapshot.val()) ).then(function (data) {
         connectionRef.child("joinAnswer").set(JSON.stringify(data));
+        connectionRef.child("createOffer").remove();
       });
     }
     else {
@@ -33,6 +34,8 @@ function enterRoom(room) {
       connectionRef.child("joinAnswer").on("value", function (snapshot) {
           if (snapshot.val()) {
             WebRTCHandler.create_joinAnswer(JSON.parse(snapshot.val()));
+            connectionRef.child("joinAnswer").off();
+            connectionRef.child("joinAnswer").remove();
           }
       });
     }
