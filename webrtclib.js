@@ -73,6 +73,8 @@ var WebRTCHandler = new (function () {
 
   var self = this;
 
+  this.onReceive = function() {};
+  
   this.create_joinAnswer = function(answer) {
     var answerDesc = new RTCSessionDescription(answer);
     webrtcCon.setRemoteDescription(answerDesc);
@@ -88,20 +90,18 @@ var WebRTCHandler = new (function () {
               console.log('data channel connect');
           }
           dataChannel.onmessage = function (e) {
-              console.log("Got message", e.data);
               if (e.data.charCodeAt(0) == 2) {
                 // The first message we get from Firefox (but not Chrome)
                 // is literal ASCII 2 and I don't understand why -- if we
                 // leave it in, JSON.parse() will barf.
                 return;
               }
-              console.log(e);
               var data = JSON.parse(e.data);
               if (data.type === 'file') {
                   console.log("Attempting to receive file. TODO");
               }
               else {
-                  console.log("Receiving text message", data.message);
+                  self.onReceive(data);
               }
           };
       } catch (e) { console.warn("No data channel", e); }
@@ -155,13 +155,12 @@ var WebRTCHandler = new (function () {
         console.log('data channel connect');
     }
     dataChannel.onmessage = function (e) {
-        console.log("Got message", e.data);
         var data = JSON.parse(e.data);
         if (data.type === 'file') {
             console.log("Attempting to receive a file. TODO.");
         }
         else {
-            console.log("Receiving text message: ", data);
+            self.onReceive(data);
         }
     };
     
