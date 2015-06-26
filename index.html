@@ -8,8 +8,41 @@
     <script src="js/bootstrap.js"></script>
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
+    
+    <style>
+    
+    .message {
+      padding: 4px;
+      margin: 5px;
+      margin: 1px solid #444;
+    }
+    #chat-messages .local {
+      color: #273;
+    }
+    
+    #chat-messages .remote {
+      color: #238;
+    }
+    
+    </style>
+    
 </head>
 <body>
+<div class="container" id="RoomGui">
+  <div class="panel">
+    <input type="text" placeholder="room name" id="room" />
+    <button class="btn btn-success" id="enter-room-btn">Enter</button>
+    <button class="btn btn-danger" id="reset-room-btn">Reset</button>
+  </div>
+</div>
+
+<div class="container" id="chat">
+  <div class="well" id="chat-messages">
+  </div>
+  <input type="text" id="message" />
+  <button class="btn btn-primary" id="send-btn" >Send</button>
+</div>
+
 <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
 <script src="webrtclib.js"></script>
 <script>
@@ -41,6 +74,28 @@ function enterRoom(room) {
     }
   });
 }
+
+$(function() {
+  WebRTCHandler.onReceive = function (data) {
+    var time = new Date();
+    $("#chat-messages").append("<div class='remote message'><small> [ " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "]</small> " + data.message + "</div>");
+    console.log(data);
+  };
+  $("#enter-room-btn").click(function() {
+    var roomName = $("#room").val();
+    enterRoom(roomName);
+  });
+  $("#reset-room-btn").click(function() {
+    var roomName = $("#room").val();
+    resetRoom(roomName);
+  });
+  $("#send-btn").click(function() {
+    var message = $("#message").val();
+    var time = new Date();
+    WebRTCHandler.send( JSON.stringify( {"message": message } ) );
+    $("#chat-messages").append("<div class='local message'><small> [ " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "] </small> " + message + "</div>");
+  });
+});
 </script>
 </body>
 </html>
