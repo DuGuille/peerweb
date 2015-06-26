@@ -74,7 +74,7 @@ var WebRTCHandler = new (function () {
   var self = this;
 
   this.create_joinAnswer = function(answer) {
-    var answerDesc = new RTCSessionDescription(JSON.parse(answer));
+    var answerDesc = new RTCSessionDescription(answer);
     webrtcCon.setRemoteDescription(answerDesc);
     console.log("Setting remote desc");
   };
@@ -130,7 +130,7 @@ var WebRTCHandler = new (function () {
   }
   
   this.join = function (desc, success, error) {
-      var offerDesc = new RTCSessionDescription(JSON.parse(offer));
+      var offerDesc = new RTCSessionDescription(desc);
       webrtcCon.setRemoteDescription(offerDesc);
       webrtcCon.createAnswer(function (answerDesc) {
           webrtcCon.setLocalDescription(answerDesc);
