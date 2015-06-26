@@ -1,0 +1,195 @@
+function Promise() {
+  var value = null;
+  var callChain = [];
+  var status = 'unresolved';
+  var lastResult = null;
+  function callThenChain() {
+    lastResult = value;
+    status = 'then';
+    callChain.forEach(function (callback) {
+      lastResult = callback(lastResult);
+    });
+    status = 'finished';
+  }
+  this.reset = function () {
+    value = null;
+    callChain = [];
+    status = 'unresolved';
+  };
+  this.getStatus = function() { return status; };
+  this.getValue = function() { return value; };
+  this.resolve = function( toValue ) {
+    if (status != 'unresolved')
+      throw "Trying to resolve again a resolved promise.";
+    value = toValue;
+    status = 'resolved';
+    callThenChain();
+  };
+  this.then = function( callback ) {
+    if (status == 'finished') 
+      callback(lastResult);
+    else
+      callChain.push(callback);
+  };
+}
+
+
+var WebRTCHandler = new (function () { 
+  'use strict';
+  
+  var iceState = 'disconnected';
+  var iceCandidatePromise = new Promise();
+  var cfg = {"iceServers":[]},
+    con = { 'optional': [ {'DtlsSrtpKeyAgreement': true}] };
+
+  var webrtcCon = new RTCPeerConnection(cfg, con);
+  
+  webrtcCon.onconnection = function () {
+    console.log( "got connection" );
+  };
+  
+  webrtcCon.onicecandidate = function (e) {
+    if (e.candidate == null) {
+        iceCandidatePromise.resolve(webrtcCon.localDescription);
+    }
+  };
+  
+  webrtcCon.onsignalingstatechange = function (state) {
+      console.info('signaling state change:', state);
+  };
+  
+  webrtcCon.oniceconnectionstatechange = function (state) {
+      console.info('ice connection state change:', state);
+      iceState = state.target.iceConnectionState;
+  };
+
+  webrtcCon.onicegatheringstatechange = function (state) {
+      console.info('ice gathering state change:', state);
+  };
+  
+  function handleCandidate(iceCandidate) {
+      webrtcCon.addIceCandidate(iceCandidate);
+  }
+
+  var self = this;
+
+  this.create_joinAnswer = function(answer) {
+    var answerDesc = new RTCSessionDescription(JSON.parse(answer));
+    webrtcCon.setRemoteDescription(answerDesc);
+    console.log("Setting remote desc");
+  };
+  
+  var dataChannel;
+  function setupDataChannel() {
+      try {
+          dataChannel = webrtcCon.createDataChannel('test', {reliable:true});
+          console.log("Created datachannel");
+          dataChannel.onopen = function (e) {
+              console.log('data channel connect');
+          }
+          dataChannel.onmessage = function (e) {
+              console.log("Got message", e.data);
+              if (e.data.charCodeAt(0) == 2) {
+                // The first message we get from Firefox (but not Chrome)
+                // is literal ASCII 2 and I don't understand why -- if we
+                // leave it in, JSON.parse() will barf.
+                return;
+              }
+              console.log(e);
+              var data = JSON.parse(e.data);
+              if (data.type === 'file') {
+                  console.log("Attempting to receive file. TODO");
+              }
+              else {
+                  console.log("Receiving text message", data.message);
+              }
+          };
+      } catch (e) { console.warn("No data channel", e); }
+  }
+  
+  this.create = function (success, error) {
+    setupDataChannel();
+    webrtcCon.createOffer(
+      function (desc) {
+          webrtcCon.setLocalDescription(desc, 
+                                        success? success.bind(self, desc) : function() {},
+                                        error? error.bind(self, desc) : function() {} );
+      }, 
+      function () {
+        if (error) 
+          error.bind(self)(null);
+      });
+    var createPromise = new Promise();
+    iceCandidatePromise.reset();
+    iceCandidatePromise.then(function (data) { createPromise.resolve(data); });
+    return createPromise;
+  };
+  
+  this.getLocalDescription = function() {
+    return webrtcCon.localDescription;
+  }
+  
+  this.join = function (desc, success, error) {
+      var offerDesc = new RTCSessionDescription(JSON.parse(offer));
+      webrtcCon.setRemoteDescription(offerDesc);
+      webrtcCon.createAnswer(function (answerDesc) {
+          webrtcCon.setLocalDescription(answerDesc);
+          if (success)
+            success.bind(self)(answerDesc);
+      }, 
+      function (e) { 
+          if (error)
+            error.bind(self)(e);
+      });
+      
+    var joinPromise = new Promise();
+    iceCandidatePromise.reset();
+    iceCandidatePromise.then(function (data) { joinPromise.resolve(data); });
+    return joinPromise;
+  };
+  
+  webrtcCon.ondatachannel = function (e) {
+    dataChannel = e.channel || e; // Chrome sends event, FF sends raw channel
+    console.log("Received datachannel", arguments);
+    dataChannel.onopen = function (e) {
+        console.log('data channel connect');
+    }
+    dataChannel.onmessage = function (e) {
+        console.log("Got message", e.data);
+        var data = JSON.parse(e.data);
+        if (data.type === 'file') {
+            console.log("Attempting to receive a file. TODO.");
+        }
+        else {
+            console.log("Receiving text message: ", data);
+        }
+    };
+    
+  };
+   
+  this.send = function (message) {
+      return dataChannel.send(message);
+  }
+
+  this.getState = function () { return iceState; };
+  
+  //////
+  this.pc = webrtcCon;
+  this.dc = dataChannel;
+})();
+
+/*
+
+
+WebRTCHandler.create().then(function (data) { console.log( JSON.stringify(JSON.stringify(data)) ); });
+
+answer = '';
+WebRTCHandler.create_joinAnswer(answer, function (a) { }, function() { console.log('No se creó.') })
+ 
+
+offer = '';
+WebRTCHandler.join(offer, function (a) { }, function() { console.log('No se unió') })
+ 
+
+
+ **/

@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>WebRTC Firebase</title>
+    <script src="js/adapter.js"></script>
+    <script src="js/jquery-2.0.0.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+</head>
+<body>
+<script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+<script src="webrtclib.js"></script>
+<script>
+function resetRoom(room) {
+  var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
+  connectionRef.child("createOffer").remove();
+  connectionRef.child("joinAnswer").remove();
+}
+function enterRoom(room) {
+  var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
+  connectionRef.child("createOffer").once("value", function (snapshot) {
+    console.log("get createoffer", snapshot.val());
+    if (snapshot.val()) {
+      WebRTCHandler.join( snapshot.data ).then(function (data) {
+        console.log("set joinAnswer", data);
+        connectionRef.child("joinAnswer").set(data);
+      });
+    }
+    else {
+      WebRTCHandler.create().then(function(data) { 
+        console.log("set createoffer", data);
+        connectionRef.child("createOffer").set(data) 
+      });
+      connectionRef.child("joinAnswer").on("value", function (snapshot) {
+          if (snapshot.val()) {
+            console.log("get joinAnswer", snapshot.val());
+            WebRTCHandler.create_joinAnswer(snapshot.val())
+          }
+      });
+    }
+  });
+}
+</script>
+</body>
+</html>
+ 
