@@ -89,6 +89,7 @@ var WebRTCHandler = new (function () {
           console.log("Created datachannel");
           dataChannel.onopen = function (e) {
               console.log('data channel connect');
+              if (self.onConnection) self.onConnection();
           }
           dataChannel.onmessage = function (e) {
               if (e.data.charCodeAt(0) == 2) {
