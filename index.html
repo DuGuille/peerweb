@@ -210,6 +210,9 @@ $(function() {
     var htmlString = messageTemplate.toHTML();
     
     $("#chat-messages").append(htmlString);
+    var objDiv = document.getElementById("chat-messages");
+    objDiv.scrollTop = objDiv.scrollHeight;
+    
   };
   
   WebRTCHandler.onConnection = function () {
@@ -241,6 +244,8 @@ $(function() {
     
     WebRTCHandler.send( JSON.stringify( {"message": message } ) );
     $("#chat-messages").append(htmlString);
+    var objDiv = document.getElementById("chat-messages");
+    objDiv.scrollTop = objDiv.scrollHeight;
   }
   
   $("#btn-send").click(sendMessage);
