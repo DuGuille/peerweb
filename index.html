@@ -205,8 +205,12 @@ $(function() {
 
   WebRTCHandler.onReceive = function (data) {
     var time = new Date();
-    $("#chat-messages").append("<div class='remote message'><small> [ " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "]</small> " + data.message + "</div>");
-    console.log(data);
+    messageTemplate.set("time", time);
+    messageTemplate.set("message", data.message);
+    messageTemplate.set("local", false);
+    var htmlString = messageTemplate.toHTML();
+    
+    $("#chat-messages").append(htmlString);
   };
   $("#enter-chat").click(function() {
     var roomName = prompt("Enter passphrase name");
