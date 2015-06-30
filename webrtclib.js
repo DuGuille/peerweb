@@ -46,6 +46,7 @@ var WebRTCHandler = new (function () {
   
   webrtcCon.onconnection = function () {
     console.log( "got connection" );
+    if (self.onConnection) self.onConnection();
   };
   
   webrtcCon.onicecandidate = function (e) {
@@ -153,6 +154,7 @@ var WebRTCHandler = new (function () {
     console.log("Received datachannel", arguments);
     dataChannel.onopen = function (e) {
         console.log('data channel connect');
+        if (self.onConnection) self.onConnection();
     }
     dataChannel.onmessage = function (e) {
         var data = JSON.parse(e.data);
@@ -168,7 +170,11 @@ var WebRTCHandler = new (function () {
    
   this.send = function (message) {
       return dataChannel.send(message);
-  }
+  };
+  
+  this.close = function () {
+    webrtcCon.close();
+  };
 
   this.getState = function () { return iceState; };
   
