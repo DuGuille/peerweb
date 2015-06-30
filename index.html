@@ -5,43 +5,166 @@
     <title>WebRTC Firebase</title>
     <script src="js/adapter.js"></script>
     <script src="js/jquery-2.0.0.js"></script>
-    <script src="js/bootstrap.js"></script>
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
     
     <style>
-    
-    .message {
-      padding: 4px;
-      margin: 5px;
-      margin: 1px solid #444;
-    }
-    #chat-messages .local {
-      color: #273;
-    }
-    
-    #chat-messages .remote {
-      color: #238;
-    }
+
+html, body {
+    height: 100%;
+}
+body {
+  background: black;  
+}
+.container{
+    margin: 0 auto;
+    height: 100%;
+    padding: 20px 0;
+
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+.chat
+{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chat li
+{
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #B3A9A9;
+}
+
+.chat li.left .chat-body
+{
+    margin-left: 60px;
+}
+
+.chat li.right .chat-body
+{
+    margin-right: 60px;
+}
+
+.panel .slidedown .glyphicon, .chat .glyphicon
+{
+    margin-right: 5px;
+}
+
+.panel {
+    height: 100%;
+    position: relative;
+    padding-top: 43px;
+    padding-bottom: 51px;
+}
+
+.panel-heading {
+  position: absolute;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+}
+
+.panel-footer {
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  left: 0px;
+}
+
+.panel-body {
+    overflow-y: scroll;
+    height: 100%;
+}
+
+.local p{
+    color: #394;
+    text-align: left;
+}
+
+.remote p {
+  color: #349;
+  text-align: left;
+}
+
+::-webkit-scrollbar-track
+{
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar
+{
+    width: 12px;
+    background-color: #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb
+{
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+    background-color: #555;
+}
+
     
     </style>
-    
+    <script src='http://cdn.ractivejs.org/latest/ractive.js'></script>
+
 </head>
 <body>
-<div class="container" id="RoomGui">
-  <div class="panel">
-    <input type="text" placeholder="room name" id="room" />
-    <button class="btn btn-success" id="enter-room-btn">Enter</button>
-    <button class="btn btn-danger" id="reset-room-btn">Reset</button>
-  </div>
+<div class="container">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <span class="glyphicon glyphicon-comment"></span> WebRTC Chat
+            <div class="btn-group pull-right">
+                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                    <span class="glyphicon glyphicon-chevron-down"></span>
+                </button>
+                <ul class="dropdown-menu slidedown">
+                    <li><a id="enter-chat"><span class="glyphicon glyphicon-log-in">
+                    </span>Enter Passphrase</a></li>
+                    <li><a id="reset-chat"><span class="glyphicon glyphicon-ban-circle">
+                    </span>Reset Passphrase</a></li>
+                    <li><a id="reconnect-chat"><span class="glyphicon glyphicon-refresh">
+                    </span>Reconnect</a></li>
+                    <li class="divider"></li>
+                    <li><a id="close-chat"><span class="glyphicon glyphicon-off"></span>
+                        Close</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="panel-body">
+            <ul class="chat" id="chat-messages">
+            </ul>
+        </div>
+        <div class="panel-footer">
+            <div class="input-group">
+                <input type="text" class="form-control input-sm" id="message-box" placeholder="Type your message here..." />
+                <span class="input-group-btn">
+                    <button class="btn btn-warning btn-sm" id="btn-send">
+                        Send</button>
+                </span>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="container" id="chat">
-  <div class="well" id="chat-messages">
-  </div>
-  <input type="text" id="message" />
-  <button class="btn btn-primary" id="send-btn" >Send</button>
-</div>
+<script type="ractive-template" id="chat-message">
+  <li class="{{ local? "local ": "remote" }} clearfix">
+    <div class="chat-body clearfix">
+      <div class="header">
+        <small class="pull-right text-muted"><span class="glyphicon glyphicon-time"></span>{{time}}</small>
+      </div>
+      <p>
+            {{message}}
+      </p>
+    </div>
+  </li>
+</script>
 
 <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
 <script src="webrtclib.js"></script>
@@ -76,24 +199,43 @@ function enterRoom(room) {
 }
 
 $(function() {
+  var messageTemplate = new Ractive({
+    template: '#chat-message'
+  });
+
   WebRTCHandler.onReceive = function (data) {
     var time = new Date();
     $("#chat-messages").append("<div class='remote message'><small> [ " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "]</small> " + data.message + "</div>");
     console.log(data);
   };
-  $("#enter-room-btn").click(function() {
-    var roomName = $("#room").val();
+  $("#enter-chat").click(function() {
+    var roomName = prompt("Enter passphrase name");
     enterRoom(roomName);
   });
-  $("#reset-room-btn").click(function() {
-    var roomName = $("#room").val();
+  $("#reset-chat").click(function() {
+    var roomName = prompt("Enter passphrase name");
     resetRoom(roomName);
   });
-  $("#send-btn").click(function() {
-    var message = $("#message").val();
+  
+  function sendMessage() {
+    var message = $("#message-box").val();
+    $("#message-box").val("");
     var time = new Date();
+    
+    messageTemplate.set("time", time);
+    messageTemplate.set("message", message);
+    messageTemplate.set("local", true);
+    var htmlString = messageTemplate.toHTML();
+    
     WebRTCHandler.send( JSON.stringify( {"message": message } ) );
-    $("#chat-messages").append("<div class='local message'><small> [ " + time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds() + "] </small> " + message + "</div>");
+    $("#chat-messages").append(htmlString);
+  }
+  
+  $("#btn-send").click(sendMessage);
+  $("#message-box").keypress(function(e) {
+      if(e.which == 13) {
+          sendMessage();
+      }
   });
 });
 </script>
