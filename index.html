@@ -172,17 +172,22 @@ body {
 <script src="webrtclib.js"></script>
 <script>
 function resetRoom(room) {
+  Firebase.goOnline();
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   connectionRef.child("createOffer").remove();
   connectionRef.child("joinAnswer").remove();
+  Firebase.goOffline();
 }
 function enterRoom(room) {
+  Firebase.goOnline();
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
+  WebRTCHandler.close();
   connectionRef.child("createOffer").once("value", function (snapshot) {
     if (snapshot.val()) {
       WebRTCHandler.join( JSON.parse(snapshot.val()) ).then(function (data) {
         connectionRef.child("joinAnswer").set(JSON.stringify(data));
         connectionRef.child("createOffer").remove();
+        Firebase.goOffline();
       });
     }
     else {
@@ -194,6 +199,7 @@ function enterRoom(room) {
             WebRTCHandler.create_joinAnswer(JSON.parse(snapshot.val()));
             connectionRef.child("joinAnswer").off();
             connectionRef.child("joinAnswer").remove();
+            Firebase.goOffline();
           }
       });
     }
