@@ -66,6 +66,7 @@ var WebRTCHandler = function () {
   webrtcCon.oniceconnectionstatechange = function (state) {
       console.info('ice connection state change:', state);
       iceState = state.target.iceConnectionState;
+      if (self.onStateChange) self.onStateChange.bind(self)();
   };
 
   webrtcCon.onicegatheringstatechange = function (state) {
