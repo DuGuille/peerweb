@@ -169,7 +169,6 @@ var messageTemplate = new Ractive({
 });
 
 function resetRoom(room) {
-  Firebase.goOnline();
   try {
     wRTCHandler.close();
   } catch (e) {
@@ -177,18 +176,23 @@ function resetRoom(room) {
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   connectionRef.child("createOffer").remove();
   connectionRef.child("joinAnswer").remove();
-  Firebase.goOffline();
 }
 function enterRoom(room) {
-  Firebase.goOnline();
-  var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   try {
     wRTCHandler.close()
   } catch (e) {
   }
   
   wRTCHandler = new WebRTCHandler();
+  var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   
+  wRTCHandler.onStateChange = function () {
+    if ( this.getState() == "closed" || this.getState() == "disconnected") {
+      $("#message-box").attr("disabled", true);
+      $("#chat-messages").append("<li class='center'>DISCONNECTED</li>");
+    }
+    
+  };
   wRTCHandler.onConnection = function () {
     $("#message-box").attr("disabled", false);
     $("#chat-messages").append("<li class='center'>CONNECTED</li>");
@@ -211,7 +215,6 @@ function enterRoom(room) {
       wRTCHandler.join( JSON.parse(snapshot.val()) ).then(function (data) {
         connectionRef.child("joinAnswer").set(JSON.stringify(data));
         connectionRef.child("createOffer").remove();
-        Firebase.goOffline();
       });
     }
     else {
@@ -223,7 +226,6 @@ function enterRoom(room) {
             wRTCHandler.create_joinAnswer(JSON.parse(snapshot.val()));
             connectionRef.child("joinAnswer").off();
             connectionRef.child("joinAnswer").remove();
-            Firebase.goOffline();
           }
       });
     }
