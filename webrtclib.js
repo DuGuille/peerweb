@@ -39,7 +39,7 @@ var WebRTCHandler = new (function () {
   
   var iceState = 'disconnected';
   var iceCandidatePromise = new Promise();
-  var cfg = {"iceServers":[]},
+  var cfg = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]},
     con = { 'optional': [ {'DtlsSrtpKeyAgreement': true}] };
 
   var webrtcCon = new RTCPeerConnection(cfg, con);
