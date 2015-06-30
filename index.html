@@ -244,7 +244,7 @@ $(function() {
     
     WebRTCHandler.send( JSON.stringify( {"message": message } ) );
     $("#chat-messages").append(htmlString);
-    var objDiv = document.getElementById("chat-messages");
+    var objDiv = document.getElementById("chat-messages").parentNode;
     objDiv.scrollTop = objDiv.scrollHeight;
   }
   
