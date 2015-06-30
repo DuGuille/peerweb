@@ -121,18 +121,9 @@ body {
         <div class="panel-heading">
             <span class="glyphicon glyphicon-comment"></span> WebRTC Chat
             <div class="btn-group pull-right">
-                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                    <span class="glyphicon glyphicon-chevron-down"></span>
-                </button>
-                <ul class="dropdown-menu slidedown">
-                    <li><a id="enter-chat"><span class="glyphicon glyphicon-log-in">
-                    </span>Enter Passphrase</a></li>
-                    <li><a id="reset-chat"><span class="glyphicon glyphicon-ban-circle">
-                    </span>Reset Passphrase</a></li>
-                    <li class="divider"></li>
-                    <li><a id="close-chat"><span class="glyphicon glyphicon-off"></span>
-                        Close</a></li>
-                </ul>
+                <a class="btn btn-success" id="enter-chat"><span class="glyphicon glyphicon-log-in"></span> Entrar</a>
+                <a class="btn btn-success" id="reset-chat"><span class="glyphicon glyphicon-ban-circle"></span> Reset</a>
+                <a class="btn btn-success" id="close-chat"><span class="glyphicon glyphicon-off"></span> Cerrar</a>
             </div>
         </div>
         <div class="panel-body">
@@ -180,7 +171,7 @@ var messageTemplate = new Ractive({
 function resetRoom(room) {
   Firebase.goOnline();
   try {
-    wRTHandler.close();
+    wRTCHandler.close();
   } catch (e) {
   }
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
@@ -192,7 +183,7 @@ function enterRoom(room) {
   Firebase.goOnline();
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   try {
-    wRTHandler.close()
+    wRTCHandler.close()
   } catch (e) {
   }
   
@@ -254,9 +245,10 @@ $(function() {
   });
   $("#close-chat").click(function() {
     try {
-      wRTHandler.close()
+      wRTCHandler.close()
     } catch (e) {
     }
+    $("#message-box").attr("disabled", true);
   });
   
   
