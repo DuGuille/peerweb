@@ -145,7 +145,7 @@ body {
         </div>
         <div class="panel-footer">
             <div class="input-group">
-                <input type="text" class="form-control input-sm" id="message-box" placeholder="Type your message here..." />
+                <input disabled="disabled" type="text" class="form-control input-sm" id="message-box" placeholder="Type your message here..." />
                 <span class="input-group-btn">
                     <button class="btn btn-warning btn-sm" id="btn-send">
                         Send</button>
@@ -171,8 +171,18 @@ body {
 <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
 <script src="webrtclib.js"></script>
 <script>
+
+var wRTCHandler = null;
+var messageTemplate = new Ractive({
+  template: '#chat-message'
+});
+
 function resetRoom(room) {
   Firebase.goOnline();
+  try {
+    wRTHandler.close();
+  } catch (e) {
+  }
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
   connectionRef.child("createOffer").remove();
   connectionRef.child("joinAnswer").remove();
@@ -181,37 +191,18 @@ function resetRoom(room) {
 function enterRoom(room) {
   Firebase.goOnline();
   var connectionRef = new Firebase('peersignals.firebaseio.com/' + room);
-  WebRTCHandler.close();
-  connectionRef.child("createOffer").once("value", function (snapshot) {
-    if (snapshot.val()) {
-      WebRTCHandler.join( JSON.parse(snapshot.val()) ).then(function (data) {
-        connectionRef.child("joinAnswer").set(JSON.stringify(data));
-        connectionRef.child("createOffer").remove();
-        Firebase.goOffline();
-      });
-    }
-    else {
-      WebRTCHandler.create().then(function(data) { 
-        connectionRef.child("createOffer").set(JSON.stringify(data)) 
-      });
-      connectionRef.child("joinAnswer").on("value", function (snapshot) {
-          if (snapshot.val()) {
-            WebRTCHandler.create_joinAnswer(JSON.parse(snapshot.val()));
-            connectionRef.child("joinAnswer").off();
-            connectionRef.child("joinAnswer").remove();
-            Firebase.goOffline();
-          }
-      });
-    }
-  });
-}
-
-$(function() {
-  var messageTemplate = new Ractive({
-    template: '#chat-message'
-  });
-
-  WebRTCHandler.onReceive = function (data) {
+  try {
+    wRTHandler.close()
+  } catch (e) {
+  }
+  
+  wRTCHandler = new WebRTCHandler();
+  
+  wRTCHandler.onConnection = function () {
+    $("#message-box").attr("disabled", false);
+    $("#chat-messages").append("<li class='center'>CONNECTED</li>");
+  };
+  wRTCHandler.onReceive = function (data) {
     var time = new Date();
     messageTemplate.set("time", time);
     messageTemplate.set("message", data.message);
@@ -224,9 +215,34 @@ $(function() {
     
   };
   
-  WebRTCHandler.onConnection = function () {
-    $("#chat-messages").append("<h3>Connected to chat</h3><hr />");
-  };
+  connectionRef.child("createOffer").once("value", function (snapshot) {
+    if (snapshot.val()) {
+      wRTCHandler.join( JSON.parse(snapshot.val()) ).then(function (data) {
+        connectionRef.child("joinAnswer").set(JSON.stringify(data));
+        connectionRef.child("createOffer").remove();
+        Firebase.goOffline();
+      });
+    }
+    else {
+      wRTCHandler.create().then(function(data) { 
+        connectionRef.child("createOffer").set(JSON.stringify(data)) 
+      });
+      connectionRef.child("joinAnswer").on("value", function (snapshot) {
+          if (snapshot.val()) {
+            wRTCHandler.create_joinAnswer(JSON.parse(snapshot.val()));
+            connectionRef.child("joinAnswer").off();
+            connectionRef.child("joinAnswer").remove();
+            Firebase.goOffline();
+          }
+      });
+    }
+  });
+}
+
+
+
+$(function() {
+
   
   $("#enter-chat").click(function() {
     var roomName = prompt("Enter passphrase name");
@@ -237,7 +253,10 @@ $(function() {
     resetRoom(roomName);
   });
   $("#close-chat").click(function() {
-    WebRTCHandler.close();
+    try {
+      wRTHandler.close()
+    } catch (e) {
+    }
   });
   
   
@@ -251,7 +270,7 @@ $(function() {
     messageTemplate.set("local", true);
     var htmlString = messageTemplate.toHTML();
     
-    WebRTCHandler.send( JSON.stringify( {"message": message } ) );
+    wRTCHandler.send( JSON.stringify( {"message": message } ) );
     $("#chat-messages").append(htmlString);
     var objDiv = document.getElementById("chat-messages").parentNode;
     objDiv.scrollTop = objDiv.scrollHeight;
