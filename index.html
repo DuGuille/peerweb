@@ -210,7 +210,7 @@ $(function() {
     var htmlString = messageTemplate.toHTML();
     
     $("#chat-messages").append(htmlString);
-    var objDiv = document.getElementById("chat-messages");
+    var objDiv = document.getElementById("chat-messages").parentNode;
     objDiv.scrollTop = objDiv.scrollHeight;
     
   };
