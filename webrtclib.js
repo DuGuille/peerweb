@@ -11,6 +11,9 @@ function Promise() {
     });
     status = 'finished';
   }
+  
+  var self = this;
+  
   this.reset = function () {
     value = null;
     callChain = [];
@@ -30,11 +33,12 @@ function Promise() {
       callback(lastResult);
     else
       callChain.push(callback);
+    return self;
   };
 }
 
 
-var WebRTCHandler = new (function () { 
+var WebRTCHandler = function () { 
   'use strict';
   
   var iceState = 'disconnected';
@@ -179,5 +183,5 @@ var WebRTCHandler = new (function () {
 
   this.getState = function () { return iceState; };
   
-})();
+};
 
