@@ -129,8 +129,6 @@ body {
                     </span>Enter Passphrase</a></li>
                     <li><a id="reset-chat"><span class="glyphicon glyphicon-ban-circle">
                     </span>Reset Passphrase</a></li>
-                    <li><a id="reconnect-chat"><span class="glyphicon glyphicon-refresh">
-                    </span>Reconnect</a></li>
                     <li class="divider"></li>
                     <li><a id="close-chat"><span class="glyphicon glyphicon-off"></span>
                         Close</a></li>
@@ -212,6 +210,11 @@ $(function() {
     
     $("#chat-messages").append(htmlString);
   };
+  
+  WebRTCHandler.onConnectio = function () {
+    $("#chat-messages").append("<h3>Connected to chat</h3><hr />");
+  };
+  
   $("#enter-chat").click(function() {
     var roomName = prompt("Enter passphrase name");
     enterRoom(roomName);
@@ -220,6 +223,10 @@ $(function() {
     var roomName = prompt("Enter passphrase name");
     resetRoom(roomName);
   });
+  $("#close-chat").click(function() {
+    WebRTCHandler.close();
+  });
+  
   
   function sendMessage() {
     var message = $("#message-box").val();
