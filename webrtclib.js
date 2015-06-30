@@ -179,23 +179,5 @@ var WebRTCHandler = new (function () {
 
   this.getState = function () { return iceState; };
   
-  //////
-  this.pc = webrtcCon;
-  this.dc = dataChannel;
 })();
 
-/*
-
-
-WebRTCHandler.create().then(function (data) { console.log( JSON.stringify(JSON.stringify(data)) ); });
-
-answer = '';
-WebRTCHandler.create_joinAnswer(answer, function (a) { }, function() { console.log('No se creó.') })
- 
-
-offer = '';
-WebRTCHandler.join(offer, function (a) { }, function() { console.log('No se unió') })
- 
-
-
- **/
